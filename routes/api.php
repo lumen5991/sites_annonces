@@ -19,20 +19,23 @@ use Illuminate\Support\Facades\Route;
 
  Route::post('/auth/register', [AuthController::class, 'createUser']);
 
+ //TODO Revoir cette route (Voir la fonction du controller pour les instructions)
  Route::post('auth/verifyEmail/{email}', [AuthController::class,'verifyEmail']);
 
  Route::post('/auth/login', [AuthController::class, 'login']);
- 
+
  Route::get('auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
- 
+
  Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
- 
+
  Route::post('/auth/resetPassword', [AuthController::class,'resetPassword']);
 
 
 
 //Catégorie
 
+// TODO Les routes de catégories doivent être protégées
+// TODO regarde comment grouper les routes
 Route::post("/addCategory", [CategoryController::class,'addCategory']);
 
 Route::get("/getAllCategories", [CategoryController::class,'getAllCategories']);

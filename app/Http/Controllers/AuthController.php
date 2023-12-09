@@ -59,13 +59,16 @@ class AuthController extends Controller
         $verificationCode = rand(100000, 999999);
         $user->update(['verification_code' => $verificationCode]);
 
-        Mail::send('mail', ['username' => $data['username'],'verificationCode' => $verificationCode,], 
-        function ($message) use ($data) {
-            $config = config('mail');
-            $message->subject('Vérification de la création de votre compte!')
-                ->from($config['from']['address'], $config['from']['name'])
-                ->to($data['email'], $data['username']);
-        });
+        Mail::send(
+            'mail',
+            ['username' => $data['username'], 'verificationCode' => $verificationCode,],
+            function ($message) use ($data) {
+                $config = config('mail');
+                $message->subject('Vérification de la création de votre compte!')
+                    ->from($config['from']['address'], $config['from']['name'])
+                    ->to($data['email'], $data['username']);
+            }
+        );
 
         return response()->json([
             'status' => 200,
@@ -73,32 +76,34 @@ class AuthController extends Controller
         ], 200);
     }
 
+    // TODO Ne plus passer le mail en paramètre de la route (très mauvaise pratique)
+    // TODO Le mail étant passer dans le corps de la requête il n'est plus utile de le passer en paramètre
     //Validation du compte (vérification du code reçu par mail)
     public function verifyEmail(Request $request, $email)
-{
-    $request->validate([
-        'verification_code' => 'required',
-        'email' => 'required|email',
-    ]);
+    {
+        $request->validate([
+            'verification_code' => 'required',
+            'email' => 'required|email',
+        ]);
 
-    $user = User::where('email', $email)->first();
+        $user = User::where('email', $email)->first();
 
-    if (!$user || $request->verification_code !== $user->verification_code) {
+        if (!$user || $request->verification_code !== $user->verification_code) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Code de vérification incorrect.',
+            ], 401);
+        }
+
+        $user->update([
+            'email_verify_at' => now(),
+        ]);
+
         return response()->json([
-            'status' => false,
-            'message' => 'Code de vérification incorrect.',
-        ], 401);
+            'status' => 200,
+            'message' => 'Compte vérifié, vous pouvez vous connecter',
+        ], 200);
     }
-
-    $user->update([
-        'email_verify_at' => now(),
-    ]);
-
-    return response()->json([
-        'status' => 200,
-        'message' => 'Compte vérifié, vous pouvez vous connecter',
-    ], 200);
-}
 
     //Connection
     public function login(Request $request)
@@ -110,14 +115,14 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if(is_null($user)) {
+        if (is_null($user)) {
             return response()->json([
                 'status' => 422,
                 'message' => "Utilisateur inexistant !",
             ], 422);
         }
 
-        if(is_null($user->email_verify_at)) {
+        if (is_null($user->email_verify_at)) {
             return response()->json([
                 'status' => 403,
                 'message' => 'Veuillez vérifier votre compte avant de vous connecter.',
@@ -147,80 +152,77 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = $request->user();
-        if($user){
+        if ($user) {
             return response()->json([
-                "infos"=> $user
+                "infos" => $user
             ]);
         }
-
     }
 
     //Déconnexion
-   public function logout(Request $request)
-    {  
+    public function logout(Request $request)
+    {
         $user = $request->user();
 
         if ($user) {
-           $user->currentAccessToken()->delete();
+            $user->currentAccessToken()->delete();
             return response()->json([
-            'message' => 'Déconnexion réussie.'
+                'message' => 'Déconnexion réussie.'
             ]);
         }
 
-    return response()->json([
-        'message' => 'Aucun utilisateur connecté.'
-    ], 401);
-    } 
+        return response()->json([
+            'message' => 'Aucun utilisateur connecté.'
+        ], 401);
+    }
 
     //mot de passe oublié
 
-   public function resetPassword(Request $request)
-{
-    $request->validate([
-        "email" => "required|email",
-        "new_password" => [
-            "required",
-            "regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%?&#^_;:,])[A-Za-z\d@$!%?&#^_;:,]{8,}$/",
-            "confirmed:new_password_confirmation"
-        ]
-    ]);
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            "email" => "required|email",
+            "new_password" => [
+                "required",
+                "regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%?&#^_;:,])[A-Za-z\d@$!%?&#^_;:,]{8,}$/",
+                "confirmed:new_password_confirmation"
+            ]
+        ]);
 
-    $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
 
-    if (is_null($user)) {
+        if (is_null($user)) {
+            return response()->json([
+                'status' => 422,
+                'message' => "Utilisateur inexistant !",
+            ], 422);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        Mail::send(
+            'forgetPassword',
+            ['username' => $user['username']],
+            function ($message) use ($user) {
+                $config = config('mail');
+                $message->subject('Notification de réinitialisation du mot de passe!')
+                    ->from($config['from']['address'], $config['from']['name'])
+                    ->to($user['email'], $user['username']);
+            }
+        );
+
         return response()->json([
-            'status' => 422,
-            'message' => "Utilisateur inexistant !",
-        ], 422);
+            'status' => 200,
+            'message' => "Mot de passe modifié avec succès",
+        ], 200);
+
+        if ($user) {
+            $user->currentAccessToken()->delete();
+            return response()->json([
+                'message' => 'Déconnexion réussie.'
+            ]);
+        }
     }
-
-    $user->update([
-        'password' => Hash::make($request->new_password),
-    ]);
-
-    Mail::send('forgetPassword', ['username' => $user['username']], 
-        function ($message) use ($user) {
-            $config = config('mail');
-            $message->subject('Notification de réinitialisation du mot de passe!')
-                ->from($config['from']['address'], $config['from']['name'])
-                ->to($user['email'], $user['username']);
-        });
-
-    return response()->json([
-        'status' => 200,
-        'message' => "Mot de passe modifié avec succès",
-    ], 200);
-
-    if ($user) {
-        $user->currentAccessToken()->delete();
-         return response()->json([
-         'message' => 'Déconnexion réussie.'
-         ]);
-     }
-
-    
-}
-
-    
-
 }

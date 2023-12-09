@@ -16,9 +16,9 @@ class AnnouncementController extends Controller
             "title" => ["string", "required", "min:2"],
             "body" => ["string"],
             "category" => ["string", "exists:categories,id"],
-            "pictures.*" => ["image|mimes:jpeg,png,jpg,gif,svg"], 
-            ]);
-        
+            "pictures.*" => ["image|mimes:jpeg,png,jpg,gif,svg"],
+        ]);
+
 
         $announcement = Announcement::create([
             "title" => $data["title"],
@@ -29,21 +29,28 @@ class AnnouncementController extends Controller
         ]);
 
         $imagePaths = [];
+        // dd($request->all());
+        dd($request->file('pictures'));
         if ($request->hasFile('pictures')) {
-    foreach ($request->file('pictures') as $picture) {
-        $path = $picture->store('announce_pictures');
-        
-        // Débogage : Affiche le chemin temporairement
-        return response()->json(['path' => $path]);
+            foreach ($request->file('pictures') as $picture) {
+                dd($picture);
+                $path = $picture->store('announce_pictures');
 
-        $announcement->pictures()->create([
-            'path' => $path,
-            'announcement' => $announcement->id,
-        ]);
+                // Débogage : Affiche le chemin temporairement
+                // TODO ton return est mal placé. Le code n'atteint pas la création des images dans la table pictures
+                // TODO Pour débuguer utilise la fonction "dd() de laravel"
+                // TODO tu peux faire dd($path) pour voir ce qu'il en retourne
+                // return response()->json(['path' => $path]);
 
-        $imagePaths[] = public_path('storage/' . $path);
-    }
-}
+                //TODO Ce code n'est jamais exécuté dû au return de la ligne précédente
+                $announcement->pictures()->create([
+                    'path' => $path,
+                    'announcement' => $announcement->id,
+                ]);
+
+                $imagePaths[] = public_path('storage/' . $path);
+            }
+        }
 
         $announcement->load('category', 'author', 'pictures');
 
@@ -51,7 +58,7 @@ class AnnouncementController extends Controller
             "status" => 200,
             "message" => "Annonce publiée avec succès",
             "annonce" => $announcement,
-            "images" => $imagePaths, 
+            "images" => $imagePaths,
         ], 200);
     }
 }
