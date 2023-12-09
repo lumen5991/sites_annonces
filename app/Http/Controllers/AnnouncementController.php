@@ -12,10 +12,12 @@ class AnnouncementController extends Controller
 {
     public function addAnnounce(Request $request)
     {
+        // TODO Revoie la validation des fichiers
         $data = $request->validate([
             "title" => ["string", "required", "min:2"],
             "body" => ["string"],
             "category" => ["string", "exists:categories,id"],
+            "pictures" => ["array"],
             "pictures.*" => ["image|mimes:jpeg,png,jpg,gif,svg"],
         ]);
 
@@ -29,11 +31,8 @@ class AnnouncementController extends Controller
         ]);
 
         $imagePaths = [];
-        // dd($request->all());
-        dd($request->file('pictures'));
         if ($request->hasFile('pictures')) {
             foreach ($request->file('pictures') as $picture) {
-                dd($picture);
                 $path = $picture->store('announce_pictures');
 
                 // Débogage : Affiche le chemin temporairement
