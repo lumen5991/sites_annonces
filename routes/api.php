@@ -41,6 +41,8 @@ Route::post("/editCategory", [CategoryController::class,'editCategory']);
 
 Route::post("/deleteCategory", [CategoryController::class,"deleteCategory"]);
 
+
+
 //Annonces
 
 Route::post("/addAnnounce", [AnnouncementController::class, "addAnnounce"])->middleware("auth:sanctum");

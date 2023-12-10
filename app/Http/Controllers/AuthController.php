@@ -17,7 +17,7 @@ class AuthController extends Controller
     public function createUser(Request $request)
     {
         $data = $request->all();
-
+    
         $request->validate([
             "firstname" => ["string", "min:2"],
             "lastname" => ["string", "min:2"],
@@ -34,12 +34,13 @@ class AuthController extends Controller
                 "confirmed:password_confirmation"
             ]
         ]);
-
+    
         $path = null;
         if ($request->hasFile("picture")) {
             $path = $request->file("picture")->store('user_pictures');
+            $path = asset('storage/' . $path); 
         }
-
+    
         $user = User::create([
             "firstname" => $data["firstname"],
             "lastname" => $data["lastname"],
@@ -219,8 +220,6 @@ class AuthController extends Controller
      }
 
     
-}
-
-    
+}  
 
 }

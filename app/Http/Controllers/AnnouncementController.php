@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
@@ -12,13 +11,20 @@ class AnnouncementController extends Controller
 {
     public function addAnnounce(Request $request)
     {
+        // Vérifier si l'utilisateur est connecté
+        if (!Auth::check()) {
+            return response()->json([
+                "status" => 401,
+                "message" => "Veuillez vous connecter avant d'ajouter une annonce.",
+            ], 401);
+        }
+
         $data = $request->validate([
             "title" => ["string", "required", "min:2"],
             "body" => ["string"],
             "category" => ["string", "exists:categories,id"],
-            "pictures.*" => ["image|mimes:jpeg,png,jpg,gif,svg"], 
-            ]);
-        
+            "pictures.*" => ["image|mimes:jpeg,png,jpg,gif,svg"],
+        ]);
 
         $announcement = Announcement::create([
             "title" => $data["title"],
@@ -29,21 +35,21 @@ class AnnouncementController extends Controller
         ]);
 
         $imagePaths = [];
-        if ($request->hasFile('pictures')) {
+
+if ($request->hasFile('pictures')) {
     foreach ($request->file('pictures') as $picture) {
         $path = $picture->store('announce_pictures');
-        
-        // Débogage : Affiche le chemin temporairement
-        return response()->json(['path' => $path]);
 
         $announcement->pictures()->create([
             'path' => $path,
             'announcement' => $announcement->id,
         ]);
 
-        $imagePaths[] = public_path('storage/' . $path);
+        
+        $imagePaths[] = asset('storage/' . $path);
     }
 }
+
 
         $announcement->load('category', 'author', 'pictures');
 
@@ -51,7 +57,7 @@ class AnnouncementController extends Controller
             "status" => 200,
             "message" => "Annonce publiée avec succès",
             "annonce" => $announcement,
-            "images" => $imagePaths, 
+            "images" => $imagePaths,
         ], 200);
     }
 }
