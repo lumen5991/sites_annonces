@@ -75,7 +75,11 @@ Route::middleware('auth:sanctum')->prefix('announce')->group(function () {
 //Routes des notes
 Route::middleware('auth:sanctum')->prefix('note')->group(function () {
 
-    Route::post("/add", [NoteController::class, "addNote"]);
+    Route::post("/add/{announcement}", [NoteController::class, "addNote"]);
+
+    Route::post("/edit/{id}", [NoteController::class,"updateNote"]);
+
+    Route::delete("/delete/{id}", [NoteController::class,"deleteNote"]);
 
 });
 
