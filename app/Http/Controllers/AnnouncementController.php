@@ -82,7 +82,7 @@ class AnnouncementController extends Controller
     ], 200);
 }
 
-    //mise à jour des annonces
+    //mise à jour des annonces (éditer)
 
    public function editAnnounce(Request $request, $id)
     {
