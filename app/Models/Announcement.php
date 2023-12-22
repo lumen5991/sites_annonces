@@ -17,15 +17,22 @@ class Announcement extends Model
     ];
 
     public function author(){
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, "author");
     }
 
     public function category(){
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, "category");
     }
 
     public function pictures(){
         return $this->hasMany(Picture::class,"announcement","id");
     }
+
+    public function note()
+    {
+        return $this->hasMany(Note::class, "announcement", "id");
+    }
+
+   
 
 }

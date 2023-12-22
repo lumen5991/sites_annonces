@@ -3,7 +3,10 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\NoteController;
 use Illuminate\Support\Facades\Route;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -15,34 +18,65 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-//Utilisateur
 
- Route::post('/auth/register', [AuthController::class, 'createUser']);
+// Routes d'authentification
+Route::prefix('auth')->group(function () {
 
- Route::post('auth/verifyEmail/{email}', [AuthController::class,'verifyEmail']);
+    Route::post('/register', [AuthController::class, 'createUser']);
 
- Route::post('/auth/login', [AuthController::class, 'login']);
- 
- Route::get('auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
- 
- Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
- 
- Route::post('/auth/resetPassword', [AuthController::class,'resetPassword']);
+     //TODO Revoir cette route (Voir la fonction du controller pour les instructions)
+    Route::post('/verifyEmail', [AuthController::class, 'verifyEmail']);
+
+    Route::post('/login', [AuthController::class, 'login']);
+
+    Route::post('/resetPassword', [AuthController::class, 'resetPassword']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+
+        Route::get('/me', [AuthController::class, 'me']);
+        
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
+
+});
+
+// TODO Les routes de catégories doivent être protégées
+// TODO regarde comment grouper les routes
+// Routes de catégorie
+Route::middleware('auth:sanctum')->prefix('category')->group(function () {
+
+    Route::post("/add", [CategoryController::class, 'addCategory']);
+
+    Route::get("/getAll", [CategoryController::class, 'getAllCategories']);
+
+    Route::get('/get/{id}', [CategoryController::class, "getCategory"]);
+
+    Route::put("/edit/{id}", [CategoryController::class, 'editCategory']);
+
+    Route::delete("/delete/{id}", [CategoryController::class, "deleteCategory"]);
+
+});
+
+// Routes d'annonces
+Route::middleware('auth:sanctum')->prefix('announce')->group(function () {
+
+    Route::post("/add", [AnnouncementController::class, "addAnnounce"]);
+
+    Route::get("/getAll", [AnnouncementController::class,"getAllAnnounce"]);
+
+    Route::get("/get/{id}", [AnnouncementController::class,"getAnnouncement"]);
+
+    Route::post("/edit/{id}", [AnnouncementController::class, "editAnnounce"]);
+
+    Route::delete("/delete/{id}", [AnnouncementController::class,"deleteAnnounce"]);
+
+});
+
+//Routes des notes
+Route::middleware('auth:sanctum')->prefix('note')->group(function () {
+
+    Route::post("/add", [NoteController::class, "addNote"]);
+
+});
 
 
-
-//Catégorie
-
-Route::post("/addCategory", [CategoryController::class,'addCategory']);
-
-Route::get("/getAllCategories", [CategoryController::class,'getAllCategories']);
-
-Route::post("/editCategory", [CategoryController::class,'editCategory']);
-
-Route::post("/deleteCategory", [CategoryController::class,"deleteCategory"]);
-
-
-
-//Annonces
-
-Route::post("/addAnnounce", [AnnouncementController::class, "addAnnounce"])->middleware("auth:sanctum");
