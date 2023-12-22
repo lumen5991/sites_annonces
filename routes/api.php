@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Routes d'authentification
-Route::prefix('auth')->group(function () {
+Route::prefix('user')->group(function () {
 
     Route::post('/register', [AuthController::class, 'createUser']);
 
@@ -36,6 +36,10 @@ Route::prefix('auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         
         Route::post('/logout', [AuthController::class, 'logout']);
+
+        Route::delete('/delete', [AuthController::class,'deleteUser']);
+
+        Route::post('/edit/{id}', [AuthController::class,'updateUser']);
     });
 
 });

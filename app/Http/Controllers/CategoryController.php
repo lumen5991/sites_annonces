@@ -82,7 +82,7 @@ class CategoryController extends Controller
 
     public function deleteCategory($id)
     {
-        
+
         $category = Category::find($id);
 
         if (is_null($category)) {

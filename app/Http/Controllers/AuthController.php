@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 
 
 
@@ -23,7 +24,7 @@ class AuthController extends Controller
             "firstname" => ["string", "min:2"],
             "lastname" => ["string", "min:2"],
             "username" => ["required", "string", "min:2"],
-            /*  "picture" => ["image","mimes:jpeg,png,jpg,gif,svg"], */
+            "picture" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "required",
                 "regex:/^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$/",
@@ -36,7 +37,7 @@ class AuthController extends Controller
             ]
         ]);
 
-        $path = null;
+
 
         if ($request->hasFile("picture")) {
 
@@ -77,11 +78,59 @@ class AuthController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Utilisateur créé avec succès',
+            'user' => $user,
+        ], 200);
+    }
+
+    //mettre à jour utilisateur
+    public function updateUser(Request $request, $id)
+    {
+        $data = $request->all();
+
+        $request->validate([
+            "firstname" => ["nullable", "string", "min:2"],
+            "lastname" => ["nullable", "string", "min:2"],
+            "username" => ["nullable", "string", "min:2"],
+            "picture" => ["nullable", "image", "mimes:jpeg,png,jpg,gif,svg"],
+            "email" => [
+                "nullable",
+                "regex:/^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$/",
+            ],
+        ]);
+
+        $user = User::find($id);
+
+        if ($user->id !== Auth::user()->id) {
+            return response()->json([
+                'status' => 403,
+                'message' => "Vous n'êtes pas autorisé à modifier ce compte.",
+            ], 403);
+        }
+
+        if ($request->hasFile("picture")) {
+
+            $path = $request->file("picture")->store('user_pictures', 'public');
+        }
+
+        $user->update([
+            "firstname" => $data["firstname"],
+            "lastname" => $data["lastname"],
+            "username" => $data["username"],
+            "picture" => $path,
+            "email" => $data["email"],
+        ]);
+
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Votre compte a été bien mise à jour avec succès',
+            'user' => $user,
         ], 200);
     }
 
     // TODO Ne plus passer le mail en paramètre de la route (très mauvaise pratique)
     // TODO Le mail étant passer dans le corps de la requête il n'est plus utile de le passer en paramètre
+
     //Validation du compte (vérification du code reçu par mail)
     public function verifyEmail(Request $request)
     {
@@ -137,7 +186,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => 401,
-                'message' => 'Les informations d\'identification ne sont pas valides.',
+                'message' => "Les informations d'identification ne sont pas valides.",
             ], 401);
         }
 
@@ -146,6 +195,7 @@ class AuthController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Connexion réussie',
+            'user' => $user,
             'token' => $token
         ], 200);
     }
@@ -229,6 +279,31 @@ class AuthController extends Controller
             ]);
         }
 
+
     }
+
+    //supprimer utilisateur
+    public function deleteUser(Request $request)
+    {
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 404,
+                'message' => "Vous n'êtes pas connecté, veuillez vous connectez avant de supprimer votre compte",
+            ], 404);
+        }
+
+        $user->announcement()->delete();
+
+        $user->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Utilisateur et annonces associées supprimés avec succès',
+        ], 200);
+    }
+
 
 }
