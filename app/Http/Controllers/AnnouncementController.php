@@ -1,5 +1,6 @@
 <?php
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -7,7 +8,7 @@ use App\Models\Announcement;
 
 
 class AnnouncementController extends Controller
-{   
+{
     //ajouter une annonce
     public function addAnnounce(Request $request)
     {
@@ -16,8 +17,8 @@ class AnnouncementController extends Controller
             "title" => ["string", "required", "min:2"],
             "body" => ["string"],
             "category" => ["string", "exists:categories,id"],
-            "pictures"=>["array"],
-            "pictures.*" => ["image","mimes:jpeg,png,jpg,gif,svg"],
+            "pictures" => ["array"],
+            "pictures.*" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
         ]);
 
         $announcement = Announcement::create([
@@ -27,18 +28,18 @@ class AnnouncementController extends Controller
             "category" => $data["category"],
             "added_at" => now(),
             "author" => Auth::user()->id
-            
+
         ]);
-        
-      $imagePaths = [];
+
+        $imagePaths = [];
         if ($request->hasFile('pictures')) {
             $pictures = $request->file('pictures');
             foreach ($pictures as $picture) {
-               
+
                 $path = $picture->store('announce_pictures', 'public');
 
                 $announcement->pictures()->create([
-                    
+
                     'path' => $path,
                     'announcement' => $announcement->id,
                 ]);
@@ -47,7 +48,7 @@ class AnnouncementController extends Controller
 
             }
 
-          
+
         }
 
         $announcement->load('category', 'author', 'pictures');
@@ -61,11 +62,12 @@ class AnnouncementController extends Controller
 
         ], 200);
 
-    }  
+    }
 
 
     //afficher toutes les annonces
-    public function getAllAnnounce(){
+    public function getAllAnnounce()
+    {
         $announces = Announcement::all();
         return response()->json([
             'status' => 200,
@@ -75,24 +77,24 @@ class AnnouncementController extends Controller
 
     //afficher une annonce
     public function getAnnouncement($id)
-{
-    $announcement = Announcement::find($id);
-    return response()->json([
-        'announcement' => $announcement
-    ], 200);
-}
+    {
+        $announcement = Announcement::find($id);
+        return response()->json([
+            'announcement' => $announcement
+        ], 200);
+    }
 
-    //mise à jour des annonces
+    //mise à jour des annonces (éditer)
 
-   public function editAnnounce(Request $request, $id)
+    public function editAnnounce(Request $request, $id)
     {
 
         $data = $request->validate([
             "title" => ["string", "min:2"],
             "body" => ["string"],
             "category" => ["string", "exists:categories,id"],
-            "pictures"=>["array"],
-            "pictures.*" => ["image","mimes:jpeg,png,jpg,gif,svg"],
+            "pictures" => ["array"],
+            "pictures.*" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
         ]);
 
         $announcement = Announcement::find($id);
@@ -118,21 +120,21 @@ class AnnouncementController extends Controller
             "category" => $data["category"],
             "added_at" => now(),
             "author" => Auth::user()->id
-            
+
         ]);
-        
-      $imagePaths = [];
+
+        $imagePaths = [];
 
         if ($request->hasFile('pictures')) {
 
             $pictures = $request->file('pictures');
 
             foreach ($pictures as $picture) {
-               
+
                 $path = $picture->store('announce_pictures', 'public');
 
                 $announcement->pictures()->update([
-                    
+
                     'path' => $path,
                     'announcement' => $announcement->id,
                 ]);
@@ -140,7 +142,7 @@ class AnnouncementController extends Controller
                 $imagePaths[] = $path;
 
             }
- 
+
         }
 
         $announcement->load('category', 'author', 'pictures');
@@ -154,10 +156,11 @@ class AnnouncementController extends Controller
 
         ], 200);
 
-    }   
+    }
 
     //suppression des annonces
-    public function deleteAnnounce($id){
+    public function deleteAnnounce($id)
+    {
         $announcement = Announcement::find($id);
 
         if (is_null($announcement)) {
@@ -175,6 +178,7 @@ class AnnouncementController extends Controller
         }
 
         $announcement->pictures->each->delete();
+        
         $announcement->delete();
 
         return response()->json([
