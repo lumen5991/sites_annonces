@@ -21,7 +21,8 @@ class AuthController extends Controller
         $request->validate([
             "firstname" => ["string", "min:2"],
             "lastname" => ["string", "min:2"],
-            "username" => ["required", "string", "min:2"], "unique:users",
+            "username" => ["required", "string", "min:2"],
+            "unique:users",
             "picture" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "required",
@@ -35,14 +36,14 @@ class AuthController extends Controller
             ]
         ]);
 
-        
+
         $path = null;
         if ($request->hasFile("picture")) {
 
             $path = $request->file("picture")->store('user_pictures', 'public');
-            
+
         }
-        
+
 
         $user = User::create([
             "firstname" => $data["firstname"],
@@ -89,7 +90,7 @@ class AuthController extends Controller
         $request->validate([
             "firstname" => ["nullable", "string", "min:2"],
             "lastname" => ["nullable", "string", "min:2"],
-            "username" => ["nullable", "string", "min:2", ],
+            "username" => ["nullable", "string", "min:2",],
             "picture" => ["nullable", "image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "nullable",
@@ -131,8 +132,8 @@ class AuthController extends Controller
     public function verifyEmail(Request $request)
     {
         $request->validate([
-            'verification_code' => 'required',
             'email' => 'required|email',
+            'verification_code' => 'required',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -204,8 +205,12 @@ class AuthController extends Controller
         $user = $request->user();
         if ($user) {
             return response()->json([
-                "infos" => $user
+                "user" => $user
             ]);
+        } else {
+            return response()->json([
+                "message" => "Utilisateur non authentifié"
+            ], 401);
         }
     }
 
