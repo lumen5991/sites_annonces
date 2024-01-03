@@ -44,8 +44,7 @@ Route::prefix('user')->group(function () {
 
 });
 
-// TODO Les routes de catégories doivent être protégées
-// TODO regarde comment grouper les routes
+
 // Routes de catégorie
 Route::middleware('auth:sanctum')->prefix('category')->group(function () {
 

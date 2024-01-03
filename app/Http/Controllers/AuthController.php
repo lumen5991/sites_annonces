@@ -14,16 +14,14 @@ use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
 
-    // Ajout d'un nouveau utilisateur
     public function createUser(Request $request)
     {
         $data = $request->all();
 
-
         $request->validate([
             "firstname" => ["string", "min:2"],
             "lastname" => ["string", "min:2"],
-            "username" => ["required", "string", "min:2"],
+            "username" => ["required", "string", "min:2"], "unique:users",
             "picture" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "required",
@@ -37,13 +35,14 @@ class AuthController extends Controller
             ]
         ]);
 
-
-
+        
+        $path = null;
         if ($request->hasFile("picture")) {
 
             $path = $request->file("picture")->store('user_pictures', 'public');
-
+            
         }
+        
 
         $user = User::create([
             "firstname" => $data["firstname"],
@@ -90,7 +89,7 @@ class AuthController extends Controller
         $request->validate([
             "firstname" => ["nullable", "string", "min:2"],
             "lastname" => ["nullable", "string", "min:2"],
-            "username" => ["nullable", "string", "min:2"],
+            "username" => ["nullable", "string", "min:2", ],
             "picture" => ["nullable", "image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "nullable",
@@ -127,9 +126,6 @@ class AuthController extends Controller
             'user' => $user,
         ], 200);
     }
-
-    // TODO Ne plus passer le mail en paramètre de la route (très mauvaise pratique)
-    // TODO Le mail étant passer dans le corps de la requête il n'est plus utile de le passer en paramètre
 
     //Validation du compte (vérification du code reçu par mail)
     public function verifyEmail(Request $request)
