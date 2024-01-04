@@ -21,13 +21,13 @@ class AuthController extends Controller
         $request->validate([
             "firstname" => ["string", "min:2"],
             "lastname" => ["string", "min:2"],
-            "username" => ["required", "string", "min:2"],
+            "username" => ["required", "string", "min:2", "unique:users, username"],
             "unique:users",
             "picture" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "required",
                 "regex:/^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$/",
-                "unique:users"
+                "unique:users, email"
             ],
             "password" => [
                 "required",
@@ -83,10 +83,10 @@ class AuthController extends Controller
     }
 
     //mettre à jour utilisateur
-    public function updateUser(Request $request, $id)
+    public function updateUser(Request $request)
     {
         $data = $request->all();
-
+        $user = $request->user();
         $request->validate([
             "firstname" => ["nullable", "string", "min:2"],
             "lastname" => ["nullable", "string", "min:2"],
@@ -98,14 +98,14 @@ class AuthController extends Controller
             ],
         ]);
 
-        $user = User::find($id);
-
-        if ($user->id !== Auth::user()->id) {
+        if (!$user) {
             return response()->json([
                 'status' => 403,
                 'message' => "Vous n'êtes pas autorisé à modifier ce compte.",
             ], 403);
         }
+
+        $path = null;
 
         if ($request->hasFile("picture")) {
 

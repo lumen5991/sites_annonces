@@ -39,7 +39,7 @@ Route::prefix('user')->group(function () {
 
         Route::delete('/delete', [AuthController::class,'deleteUser']);
 
-        Route::post('/edit/{id}', [AuthController::class,'updateUser']);
+        Route::post('/edit', [AuthController::class,'updateUser']);
     });
 
 });
