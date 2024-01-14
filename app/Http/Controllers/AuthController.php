@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -21,13 +22,13 @@ class AuthController extends Controller
         $request->validate([
             "firstname" => ["string", "min:2"],
             "lastname" => ["string", "min:2"],
-            "username" => ["required", "string", "min:2", "unique:users, username"],
+            "username" => ["required", "string", "min:2", "unique:users"],
             "unique:users",
             "picture" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "required",
                 "regex:/^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$/",
-                "unique:users, email"
+                "unique:users"
             ],
             "password" => [
                 "required",
@@ -97,36 +98,36 @@ class AuthController extends Controller
                 "regex:/^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$/",
             ],
         ]);
-
+    
         if (!$user) {
             return response()->json([
                 'status' => 403,
                 'message' => "Vous n'êtes pas autorisé à modifier ce compte.",
             ], 403);
         }
-
+    
         $path = null;
-
+    
         if ($request->hasFile("picture")) {
-
             $path = $request->file("picture")->store('user_pictures', 'public');
         }
-
+    
         $user->update([
             "firstname" => $data["firstname"],
             "lastname" => $data["lastname"],
             "username" => $data["username"],
-            "picture" => $path,
+            "picture" => asset(Storage::url($path)),
             "email" => $data["email"],
         ]);
-
-
+    
         return response()->json([
             'status' => 200,
             'message' => 'Votre compte a été bien mise à jour avec succès',
             'user' => $user,
         ], 200);
     }
+    
+
 
     //Validation du compte (vérification du code reçu par mail)
     public function verifyEmail(Request $request)
