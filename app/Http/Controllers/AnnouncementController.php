@@ -61,6 +61,7 @@ class AnnouncementController extends Controller
             "pictures" => $imagePaths,
 
         ], 200);
+       
 
     }
 
