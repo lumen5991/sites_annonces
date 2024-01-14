@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -14,16 +15,15 @@ use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
 
-    // Ajout d'un nouveau utilisateur
     public function createUser(Request $request)
     {
         $data = $request->all();
-        $path = null;
 
         $request->validate([
             "firstname" => ["string", "min:2"],
             "lastname" => ["string", "min:2"],
-            "username" => ["required", "string", "min:2"],
+            "username" => ["required", "string", "min:2", "unique:users"],
+            "unique:users",
             "picture" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "required",
@@ -38,12 +38,13 @@ class AuthController extends Controller
         ]);
 
 
-
+        $path = null;
         if ($request->hasFile("picture")) {
 
             $path = $request->file("picture")->store('user_pictures', 'public');
 
         }
+
 
         $user = User::create([
             "firstname" => $data["firstname"],
@@ -83,14 +84,14 @@ class AuthController extends Controller
     }
 
     //mettre à jour utilisateur
-    public function updateUser(Request $request, $id)
+    public function updateUser(Request $request)
     {
         $data = $request->all();
-
+        $user = $request->user();
         $request->validate([
             "firstname" => ["nullable", "string", "min:2"],
             "lastname" => ["nullable", "string", "min:2"],
-            "username" => ["nullable", "string", "min:2"],
+            "username" => ["nullable", "string", "min:2",],
             "picture" => ["nullable", "image", "mimes:jpeg,png,jpg,gif,svg"],
             "email" => [
                 "nullable",
@@ -98,17 +99,16 @@ class AuthController extends Controller
             ],
         ]);
 
-        $user = User::find($id);
-
-        if ($user->id !== Auth::user()->id) {
+        if (!$user) {
             return response()->json([
                 'status' => 403,
                 'message' => "Vous n'êtes pas autorisé à modifier ce compte.",
             ], 403);
         }
 
-        if ($request->hasFile("picture")) {
+        $path = null;
 
+        if ($request->hasFile("picture")) {
             $path = $request->file("picture")->store('user_pictures', 'public');
         }
 
@@ -116,10 +116,9 @@ class AuthController extends Controller
             "firstname" => $data["firstname"],
             "lastname" => $data["lastname"],
             "username" => $data["username"],
-            "picture" => $path,
+            "picture" => asset(Storage::url($path)),
             "email" => $data["email"],
         ]);
-
 
         return response()->json([
             'status' => 200,
@@ -128,15 +127,14 @@ class AuthController extends Controller
         ], 200);
     }
 
-    // TODO Ne plus passer le mail en paramètre de la route (très mauvaise pratique)
-    // TODO Le mail étant passer dans le corps de la requête il n'est plus utile de le passer en paramètre
+
 
     //Validation du compte (vérification du code reçu par mail)
     public function verifyEmail(Request $request)
     {
         $request->validate([
-            'verification_code' => 'required',
             'email' => 'required|email',
+            'verification_code' => 'required',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -208,8 +206,12 @@ class AuthController extends Controller
         $user = $request->user();
         if ($user) {
             return response()->json([
-                "infos" => $user
+                "user" => $user
             ]);
+        } else {
+            return response()->json([
+                "message" => "Utilisateur non authentifié"
+            ], 401);
         }
     }
 

@@ -52,7 +52,7 @@ class CategoryController extends Controller
     {
         $category = Category::find($id);
         return response()->json([
-            'announcement' => $category,
+            'category' => $category,
         ], 200);
     }
     public function editCategory(Request $request, $id)
