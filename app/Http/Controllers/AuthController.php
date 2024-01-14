@@ -18,7 +18,7 @@ class AuthController extends Controller
     public function createUser(Request $request)
     {
         $data = $request->all();
-
+        $path = null;
 
         $request->validate([
             "firstname" => ["string", "min:2"],

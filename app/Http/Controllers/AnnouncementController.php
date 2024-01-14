@@ -60,7 +60,7 @@ class AnnouncementController extends Controller
             "annonce" => $announcement,
             "pictures" => $imagePaths,
 
-        ], 200);
+        ], 200); //TODO le statut pour la création d'une ressource est 201
 
     }
 
@@ -178,7 +178,7 @@ class AnnouncementController extends Controller
         }
 
         $announcement->pictures->each->delete();
-        
+
         $announcement->delete();
 
         return response()->json([

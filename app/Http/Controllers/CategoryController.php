@@ -17,6 +17,8 @@ class CategoryController extends Controller
             "description" => ["string"]
         ]);
 
+        // TODO Evite les déclarations de variable avec une majuscule au début
+        // TODO Tu peux nommer cette variable $categoryExists par exemple
         $Category = Category::where('name', $data['name'])->first();
 
         if (!is_null($Category)) {
