@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
 
-
 class AuthController extends Controller
 {
 
@@ -37,14 +36,12 @@ class AuthController extends Controller
             ]
         ]);
 
-
         $path = null;
         if ($request->hasFile("picture")) {
 
             $path = $request->file("picture")->store('user_pictures', 'public');
 
         }
-
 
         $user = User::create([
             "firstname" => $data["firstname"],

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
@@ -40,6 +41,8 @@ class CategoryController extends Controller
 
     public function getAllCategories()
     {
+
+
         $categories = Category::all();
         return response()->json([
             'status' => 200,
@@ -69,6 +72,13 @@ class CategoryController extends Controller
             ], 422);
         }
 
+      /*    if ($category->author !== Auth::user()->id) {
+            return response()->json([
+                'status' => 403,
+                'message' => "Vous n'êtes pas autorisé à modifier cette catégorie.",
+            ], 403);
+        } */
+
         $category->update([
             'name' => $request->new_name,
             'description' => $request->new_description,
@@ -91,6 +101,13 @@ class CategoryController extends Controller
                 'message' => "Cette catégorie n'existe pas, vous ne pouvez la supprimer !",
             ], 422);
         }
+
+      /*   if ($category->author !== Auth::user()->id) {
+            return response()->json([
+                'status' => 403,
+                'message' => "Vous n'êtes pas autorisé à supprimer cette catégorie.",
+            ], 403);
+        } */
 
         $category->delete();
 
