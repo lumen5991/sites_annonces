@@ -11,56 +11,54 @@ class NoteController extends Controller
 {
     //
     public function addNote(Request $request, $announcement)
-    {
-        $data = $request->validate([
-            "note" => ["required", "integer", "min:1", "max:5"],
-        ]);
+{
+    $data = $request->validate([
+        "note" => ["required", "integer", "min:1", "max:5"],
+    ]);
 
-        $user = Auth::user();
+    $user = Auth::user();
 
-        $announcement = Announcement::find($announcement);
+    $announcement = Announcement::find($announcement);
 
-        if (!$announcement) {
-            return response()->json([
-                "status" => 404,
-                "message" => "Annonce non trouvée.",
-            ], 404);
-        }
-
-        $existingNote = Note::where('user', $user->id)
-            ->where('announcement', $announcement->id)
-            ->first();
-
-        if ($existingNote) {
-            return response()->json([
-                "status" => 400,
-                "message" => "Vous avez déjà noté cette annonce.",
-            ], 400);
-        }
-
-        $note = Note::create([
-            'note' => $data['note'],
-            'user' => $user->id,
-            'announcement' => $announcement->id,
-        ]);
-
+    if (!$announcement) {
         return response()->json([
-            "status" => 200,
-            "message" => "Note ajoutée avec succès.",
-            "note" => $note,
-        ], 200);
+            "status" => 404,
+            "message" => "Annonce non trouvée.",
+        ], 404);
     }
 
-    //mettre à jour une note
+    if ($user->id === $announcement->author) {
+        return response()->json([
+            "status" => 403,
+            "message" => "Vous ne pouvez pas noter votre propre annonce.",
+        ], 403);
+    }
 
-    public function updateNote(Request $request, $id)
+    
+    Note::where('user', $user->id)
+        ->where('announcement', $announcement->id)
+        ->delete();
+
+  
+    $note = Note::create([
+        'note' => $data['note'],
+        'user' => $user->id,
+        'announcement' => $announcement->id,
+    ]);
+
+    return response()->json([
+        "status" => 200,
+        "message" => "Note ajoutée avec succès.",
+        "note" => $note,
+    ], 200);
+}
+
+
+
+    //Afficher les notes
+    public function getNote($id)
     {
-        $data = $request->validate([
-            "note" => ["required", "integer", "min:1", "max:5"],
-        ]);
-
         $note = note::find($id);
-
         if (!$note) {
             return response()->json([
                 "status" => 404,
@@ -68,20 +66,9 @@ class NoteController extends Controller
             ], 404);
         }
 
-        if ($note->user !== Auth::user()->id) {
-            return response()->json([
-                "status" => 403,
-                "message" => "Vous n'êtes pas l'auteur de cette note. Vous n'avez pas la permission de la mettre à jour.",
-            ], 403);
-        }
-
-        $note->update([
-            'note' => $data['note'],
-        ]);
-
         return response()->json([
             "status" => 200,
-            "message" => "Note mise à jour avec succès.",
+            "message" => "La note n'a pas pu être recupérée.",
             "note" => $note,
         ], 200);
     }
@@ -115,6 +102,5 @@ class NoteController extends Controller
         ], 200);
 
     }
-
 
 }

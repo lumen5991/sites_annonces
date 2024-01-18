@@ -166,7 +166,7 @@ class AnnouncementController extends Controller
                 'message' => "Cette annonce n'a pas été trouvée.",
             ], 422);
         }
-
+      /*   dd($announcement->author()); */
         if ($announcement->author !== Auth::user()->id) {
             return response()->json([
                 'status' => 403,

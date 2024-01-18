@@ -80,10 +80,12 @@ Route::middleware('auth:sanctum')->prefix('note')->group(function () {
 
     Route::post("/add/{announcement}", [NoteController::class, "addNote"]);
 
-    Route::post("/edit/{id}", [NoteController::class,"updateNote"]);
+    Route::delete("/delete/{id}", [NoteController::class, "deleteNote"]);
 
-    Route::delete("/delete/{id}", [NoteController::class,"deleteNote"]);
+    Route::get("/get/{id}", [NoteController::class, "getNote"]);
 
+    
 });
+
 
 

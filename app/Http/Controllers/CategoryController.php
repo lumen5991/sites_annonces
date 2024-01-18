@@ -72,14 +72,14 @@ class CategoryController extends Controller
             ], 422);
         }
 
-      /*    if ($category->author !== Auth::user()->id) {
+        if ($category->user_id !== Auth::user()->id) {
             return response()->json([
                 'status' => 403,
                 'message' => "Vous n'êtes pas autorisé à modifier cette catégorie.",
             ], 403);
-        } */
+        }
 
-        $category->update([
+        $category->update(["
             'name' => $request->new_name,
             'description' => $request->new_description,
         ]);
@@ -101,13 +101,7 @@ class CategoryController extends Controller
                 'message' => "Cette catégorie n'existe pas, vous ne pouvez la supprimer !",
             ], 422);
         }
-
-      /*   if ($category->author !== Auth::user()->id) {
-            return response()->json([
-                'status' => 403,
-                'message' => "Vous n'êtes pas autorisé à supprimer cette catégorie.",
-            ], 403);
-        } */
+        
 
         $category->delete();
 
