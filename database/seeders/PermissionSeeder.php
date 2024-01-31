@@ -1,0 +1,22 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+
+class PermissionSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        Permission::create(['name' => "addCategory"]);
+        Permission::create(['name' => "getCategory"]);
+        Permission::create(['name' => "editCategory"]);
+        Permission::create(['name' => "deleteCategory"]);
+    }
+}

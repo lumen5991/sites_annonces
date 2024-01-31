@@ -9,53 +9,59 @@ use Illuminate\Support\Facades\Auth;
 
 class NoteController extends Controller
 {
-    //
+    /**
+     * @param Request $request, $announcement
+     * noter une annonce
+     */
     public function addNote(Request $request, $announcement)
-{
-    $data = $request->validate([
-        "note" => ["required", "integer", "min:1", "max:5"],
-    ]);
+    {
+        $data = $request->validate([
+            "note" => ["required", "integer", "min:1", "max:5"],
+        ]);
 
-    $user = Auth::user();
+        $user = Auth::user();
 
-    $announcement = Announcement::find($announcement);
+        $announcement = Announcement::find($announcement);
 
-    if (!$announcement) {
+        if (!$announcement) {
+            return response()->json([
+                "status" => 404,
+                "message" => "Annonce non trouvée.",
+            ], 404);
+        }
+
+        if ($user->id === $announcement->author) {
+            return response()->json([
+                "status" => 403,
+                "message" => "Vous ne pouvez pas noter votre propre annonce.",
+            ], 403);
+        }
+
+
+        Note::where('user', $user->id)
+            ->where('announcement', $announcement->id)
+            ->delete();
+
+
+        $note = Note::create([
+            'note' => $data['note'],
+            'user' => $user->id,
+            'announcement' => $announcement->id,
+        ]);
+
         return response()->json([
-            "status" => 404,
-            "message" => "Annonce non trouvée.",
-        ], 404);
-    }
-
-    if ($user->id === $announcement->author) {
-        return response()->json([
-            "status" => 403,
-            "message" => "Vous ne pouvez pas noter votre propre annonce.",
-        ], 403);
+            "status" => 200,
+            "message" => "Note ajoutée avec succès.",
+            "note" => $note,
+        ], 200);
     }
 
     
-    Note::where('user', $user->id)
-        ->where('announcement', $announcement->id)
-        ->delete();
+    /**
+     * @param $id
+     * afficher une note
+     */
 
-  
-    $note = Note::create([
-        'note' => $data['note'],
-        'user' => $user->id,
-        'announcement' => $announcement->id,
-    ]);
-
-    return response()->json([
-        "status" => 200,
-        "message" => "Note ajoutée avec succès.",
-        "note" => $note,
-    ], 200);
-}
-
-
-
-    //Afficher les notes
     public function getNote($id)
     {
         $note = note::find($id);
@@ -73,7 +79,14 @@ class NoteController extends Controller
         ], 200);
     }
 
-    //supprimer une note
+    /**
+     * afficher les notes par annonce et calculer la moyenne des notes
+     */
+
+    /**
+     * @param $id
+     * supprimer sa note
+     */
     public function deleteNote($id)
     {
 

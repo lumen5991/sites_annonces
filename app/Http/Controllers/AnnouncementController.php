@@ -10,7 +10,11 @@ use App\Models\Announcement;
 
 class AnnouncementController extends Controller
 {
-    //ajouter une annonce
+
+    /**
+     * @param Request $request
+     * ajouter une annonce
+     */
     public function addAnnounce(Request $request)
     {
         // TODO Revoir la validation des fichiers
@@ -51,7 +55,7 @@ class AnnouncementController extends Controller
         }
 
         $announcement->load('category', 'author', 'pictures');
-        
+
         return response()->json([
 
             "status" => 200,
@@ -60,24 +64,28 @@ class AnnouncementController extends Controller
             "pictures" => $imagePaths,
 
         ], 200);
-       
+
 
     }
 
 
-    //afficher toutes les annonces
+    /**
+     * afficher toutes les annonces
+     */
     public function getAllAnnounce()
-
     {
         $announces = Announcement::with('category', 'author', 'pictures')->get();
-   
+
         return response()->json([
             'status' => 200,
             'announcements' => $announces,
         ], 200);
     }
 
-    //afficher une annonce
+    /**
+     * @param $id
+     * afficher une annonce
+     */
     public function getAnnouncement($id)
     {
         $announcement = Announcement::find($id);
@@ -85,11 +93,14 @@ class AnnouncementController extends Controller
         $announcement->load('category', 'author', 'pictures');
         return response()->json([
             'announcement' => $announcement,
-        
+
         ], 200);
     }
 
-    //mise à jour des annonces (éditer)
+    /**
+     * @param Request $request, $id
+     * mise à jour des annonces (éditer) 
+     */
 
     public function editAnnounce(Request $request, $id)
     {
@@ -100,25 +111,25 @@ class AnnouncementController extends Controller
             "pictures" => ["array"],
             "pictures.*" => ["image", "mimes:jpeg,png,jpg,gif,svg"],
         ]);
-    
+
         $announcement = Announcement::find($id);
-    
+
         if (is_null($announcement)) {
             return response()->json([
                 'status' => 422,
                 'message' => "Nous n'avons pas retrouvé cette annonce !",
             ], 422);
         }
-    
+
         if ($announcement->author !== Auth::user()->id) {
             return response()->json([
                 'status' => 403,
                 'message' => "Vous n'êtes pas autorisé à modifier cette annonce.",
             ], 403);
         }
-    
+
         $announcement->pictures()->delete();
-    
+
         $announcement->update([
             "title" => $data["title"],
             "body" => $data["body"],
@@ -126,26 +137,26 @@ class AnnouncementController extends Controller
             "added_at" => now(),
             "author" => Auth::user()->id,
         ]);
-    
+
         $imagePaths = [];
-    
+
         if ($request->hasFile('pictures')) {
             $pictures = $request->file('pictures');
-    
+
             foreach ($pictures as $picture) {
                 $path = $picture->store('announce_pictures', 'public');
-    
+
                 $announcement->pictures()->create([
                     'path' => asset(Storage::url($path)),
                     'announcement' => $announcement->id,
                 ]);
-    
+
                 $imagePaths[] = $path;
             }
         }
-    
+
         $announcement->load('category', 'author', 'pictures');
-    
+
         return response()->json([
             "status" => 200,
             "message" => "Annonce modifiée avec succès",
@@ -153,9 +164,12 @@ class AnnouncementController extends Controller
             "pictures" => $imagePaths,
         ], 200);
     }
-    
 
-    //suppression des annonces
+    
+    /**
+     * @param $id
+     * suppression des annonces
+     */
     public function deleteAnnounce($id)
     {
         $announcement = Announcement::find($id);
@@ -166,7 +180,7 @@ class AnnouncementController extends Controller
                 'message' => "Cette annonce n'a pas été trouvée.",
             ], 422);
         }
-      /*   dd($announcement->author()); */
+        /*   dd($announcement->author()); */
         if ($announcement->author !== Auth::user()->id) {
             return response()->json([
                 'status' => 403,
@@ -175,7 +189,7 @@ class AnnouncementController extends Controller
         }
 
         $announcement->pictures->each->delete();
-        
+
         $announcement->delete();
 
         return response()->json([

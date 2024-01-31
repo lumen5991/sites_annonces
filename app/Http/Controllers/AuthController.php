@@ -8,12 +8,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
-
+use Spatie\Permission\Traits\HasRoles;
 
 class AuthController extends Controller
 {
+    use HasRoles;
 
+    /**
+     *  @param Request $request
+     *  ajouter un utilisateur
+     */
     public function createUser(Request $request)
     {
         $data = $request->all();
@@ -80,7 +84,10 @@ class AuthController extends Controller
         ], 200);
     }
 
-    //mettre à jour utilisateur
+    /**
+     * @param Request $request
+     * mettre à jour son compte utilisateurs
+     */
     public function updateUser(Request $request)
     {
         $data = $request->all();
@@ -95,20 +102,20 @@ class AuthController extends Controller
                 "regex:/^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$/",
             ],
         ]);
-    
+
         if (!$user) {
             return response()->json([
                 'status' => 403,
                 'message' => "Vous n'êtes pas autorisé à modifier ce compte.",
             ], 403);
         }
-    
+
         $path = null;
-    
+
         if ($request->hasFile("picture")) {
             $path = $request->file("picture")->store('user_pictures', 'public');
         }
-    
+
         $user->update([
             "firstname" => $data["firstname"],
             "lastname" => $data["lastname"],
@@ -116,17 +123,19 @@ class AuthController extends Controller
             "picture" => asset(Storage::url($path)),
             "email" => $data["email"],
         ]);
-    
+
         return response()->json([
             'status' => 200,
             'message' => 'Votre compte a été bien mise à jour avec succès',
             'user' => $user,
         ], 200);
     }
-    
 
 
-    //Validation du compte (vérification du code reçu par mail)
+    /**
+     * @param Request $request
+     * Validation du compte (vérification du code reçu par mail)
+     */
     public function verifyEmail(Request $request)
     {
         $request->validate([
@@ -147,6 +156,7 @@ class AuthController extends Controller
             'email_verify_at' => now(),
         ]);
 
+
         return response()->json([
             'status' => 200,
             'message' => 'Compte vérifié, vous pouvez vous connecter',
@@ -154,7 +164,10 @@ class AuthController extends Controller
     }
 
 
-    //Connection
+    /**
+     * @param Request $request
+     * se connecter
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -187,32 +200,49 @@ class AuthController extends Controller
 
         $token = $user->createToken('API_TOKEN')->plainTextToken;
 
+        $roles = $user->getRoleNames();
+
+
         return response()->json([
             'status' => 200,
             'message' => 'Connexion réussie',
             'user' => $user,
-            'token' => $token
+            'token' => $token,
+            'roles' => $roles,
         ], 200);
     }
+    
 
-
-    //Récupérer l'utilisateur connecté
+    /**
+     * @param Request $request
+     * Récupérer l'utilisateur connecté
+     */
 
     public function me(Request $request)
     {
         $user = $request->user();
+        $roles = $user->getRoleNames();
         if ($user) {
             return response()->json([
                 "user" => $user
             ]);
         } else {
-            return response()->json([
-                "message" => "Utilisateur non authentifié"
-            ], 401);
+            return response()->json(
+                [
+                    "message" => "Utilisateur non authentifié",
+                    "roles" => $roles,
+                ],
+                401
+            );
         }
     }
 
-    //Déconnexion
+
+
+    /**
+     * @param Request $request
+     * Déconnexion
+     */
     public function logout(Request $request)
     {
         $user = $request->user();
@@ -229,8 +259,11 @@ class AuthController extends Controller
         ], 401);
     }
 
-    //mot de passe oublié
 
+    /**
+     * @param Request $request
+     * mot de passe oublié
+     */
     public function resetPassword(Request $request)
     {
         $request->validate([
@@ -281,7 +314,11 @@ class AuthController extends Controller
 
     }
 
-    //supprimer utilisateur
+
+    /**
+     * @param Request $request
+     * supprimer utilisateur
+     */
     public function deleteUser(Request $request)
     {
 
@@ -304,5 +341,30 @@ class AuthController extends Controller
         ], 200);
     }
 
+    /**
+     * @param Request $request
+     * Récupérer tous les utilisateurs 
+     */
+    public function getAllUsers(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user || !$user->hasRole('admin')) {
+            return response()->json([
+                'status' => 403,
+                'message' => "Vous n'avez pas les autorisations nécessaires.",
+            ], 403);
+        }
+        // $users = User::with('roles')->get();
+
+        $users = User::all();
+        $users->load('roles');
+
+        return response()->json([
+            'status' => 200,
+            'users' => $users,
+
+        ], 200);
+    }
 
 }

@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -24,7 +25,7 @@ Route::prefix('user')->group(function () {
 
     Route::post('/register', [AuthController::class, 'createUser']);
 
-     //TODO Revoir cette route (Voir la fonction du controller pour les instructions)
+    // TODO Revoir cette route (Voir la fonction du controller pour les instructions)
     Route::post('/verifyEmail', [AuthController::class, 'verifyEmail']);
 
     Route::post('/login', [AuthController::class, 'login']);
@@ -40,23 +41,31 @@ Route::prefix('user')->group(function () {
         Route::delete('/delete', [AuthController::class,'deleteUser']);
 
         Route::post('/edit', [AuthController::class,'updateUser']);
+
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/getAllUsers', [AuthController::class, 'getAllUsers']);
+        });
     });
 
 });
 
 
 // Routes de catégorie
-Route::middleware('auth:sanctum')->prefix('category')->group(function () {
 
-    Route::post("/add", [CategoryController::class, 'addCategory']);
+Route::prefix('category')->group(function () {
 
     Route::get("/getAll", [CategoryController::class, 'getAllCategories']);
 
-    Route::get('/get/{id}', [CategoryController::class, "getCategory"]);
+    Route::middleware(['auth:sanctum', 'role:admin' ])->group(function () {
 
-    Route::put("/edit/{id}", [CategoryController::class, 'editCategory']);
+        Route::post("/add", [CategoryController::class, 'addCategory']);
+        
+        Route::get('/get/{id}', [CategoryController::class, "getCategory"]);
 
-    Route::delete("/delete/{id}", [CategoryController::class, "deleteCategory"]);
+        Route::put("/edit/{id}", [CategoryController::class, 'editCategory']);
+
+        Route::delete("/delete/{id}", [CategoryController::class, "deleteCategory"]);
+    });
 
 });
 
@@ -75,6 +84,7 @@ Route::middleware('auth:sanctum')->prefix('announce')->group(function () {
 
 });
 
+
 //Routes des notes
 Route::middleware('auth:sanctum')->prefix('note')->group(function () {
 
@@ -82,10 +92,20 @@ Route::middleware('auth:sanctum')->prefix('note')->group(function () {
 
     Route::delete("/delete/{id}", [NoteController::class, "deleteNote"]);
 
-    Route::get("/get/{id}", [NoteController::class, "getNote"]);
-
-    
+    Route::get("/get/{id}", [NoteController::class, "getNote"]);    
 });
+
+
+//Routes d'attribution des roles
+
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('roles')->group(function () {
+    
+    Route::post("/assignRoleAdmin/{id}", [RoleController::class, "assignAdminRole"]);
+
+    Route::delete("/removeRole/{id}", [RoleController::class, "removeRole"]);
+});
+
+
 
 
 
