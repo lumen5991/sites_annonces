@@ -92,7 +92,10 @@ Route::middleware('auth:sanctum')->prefix('note')->group(function () {
 
     Route::delete("/delete/{id}", [NoteController::class, "deleteNote"]);
 
-    Route::get("/get/{id}", [NoteController::class, "getNote"]);    
+    Route::get("/get/{id}", [NoteController::class, "getNote"]);   
+    
+    Route::get("/getAverageByAnnounce/{announcement}", [NoteController::class, "getAverageByAnnounce"]);
+ 
 });
 
 

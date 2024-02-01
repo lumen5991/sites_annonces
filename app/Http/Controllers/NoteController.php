@@ -80,8 +80,39 @@ class NoteController extends Controller
     }
 
     /**
-     * afficher les notes par annonce et calculer la moyenne des notes
+     * @param $announcement
+     * Moyenne des notes par annonces
      */
+
+     public function getAverageByAnnounce($announcement)
+{
+    $announcement = Announcement::find($announcement);
+
+    if (!$announcement) {
+        return response()->json([
+            "status" => 404,
+            "message" => "Annonce non trouvée.",
+        ], 404);
+    }
+
+    $notes = Note::where('announcement', $announcement->id)->get();
+
+    if (!$notes) {
+        return response()->json([
+            "status" => 404,
+            "message" => "Aucune note trouvée pour cette annonce.",
+        ], 404);
+    }
+
+    $moyenne = $notes->avg('note');
+
+    return response()->json([
+        "status" => 200,
+        "message" => "Notes récupérées avec succès.",
+        "notes" => $notes,
+        "averageNotes" => $moyenne,
+    ], 200);
+}
 
     /**
      * @param $id

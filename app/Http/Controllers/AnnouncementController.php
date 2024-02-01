@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Announcement;
+use App\Models\Note;
 
 
 class AnnouncementController extends Controller
@@ -75,10 +76,18 @@ class AnnouncementController extends Controller
     public function getAllAnnounce()
     {
         $announces = Announcement::with('category', 'author', 'pictures')->get();
+        
+        $notes = Note::all();
+
+        $notes->load('announcement');
+       
+      /*   $moyenne = $notes->avg('note'); */
 
         return response()->json([
             'status' => 200,
             'announcements' => $announces,
+            'notes'=>$notes,
+            /* 'moyenne'=>$moyenne */
         ], 200);
     }
 
@@ -90,10 +99,19 @@ class AnnouncementController extends Controller
     {
         $announcement = Announcement::find($id);
 
-        $announcement->load('category', 'author', 'pictures');
+        $announcement->load('category', 'author', 'pictures',);
+
+        $notes = Note::where('announcement', $id)->get();
+
+        $moyenne = $notes->avg('note');
+
         return response()->json([
+
             'announcement' => $announcement,
 
+            'notes'=>$notes,
+
+            "moyenne"=>$moyenne
         ], 200);
     }
 
