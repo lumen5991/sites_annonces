@@ -11,7 +11,6 @@ use App\Models\Note;
 
 class AnnouncementController extends Controller
 {
-
     /**
      * @param Request $request
      * ajouter une annonce
@@ -19,6 +18,14 @@ class AnnouncementController extends Controller
     public function addAnnounce(Request $request)
     {
         // TODO Revoir la validation des fichiers
+
+        if (!Auth::user()) {
+            return response()->json([
+                'status' => 401,
+                'message' => "Veuillez vous connectez ou vous inscrire avant d'effectuer cette action.",
+            ], 401);
+        }
+
         $data = $request->validate([
             "title" => ["string", "required", "min:2"],
             "body" => ["string"],
@@ -70,55 +77,12 @@ class AnnouncementController extends Controller
     }
 
 
-    /**
-     * afficher toutes les annonces
-     */
-    public function getAllAnnounce()
-    {
-        $announces = Announcement::with('category', 'author', 'pictures')->get();
-        
-        $notes = Note::all();
-
-        $notes->load('announcement');
-       
-      /*   $moyenne = $notes->avg('note'); */
-
-        return response()->json([
-            'status' => 200,
-            'announcements' => $announces,
-            'notes'=>$notes,
-            /* 'moyenne'=>$moyenne */
-        ], 200);
-    }
-
-    /**
-     * @param $id
-     * afficher une annonce
-     */
-    public function getAnnouncement($id)
-    {
-        $announcement = Announcement::find($id);
-
-        $announcement->load('category', 'author', 'pictures',);
-
-        $notes = Note::where('announcement', $id)->get();
-
-        $moyenne = $notes->avg('note');
-
-        return response()->json([
-
-            'announcement' => $announcement,
-
-            'notes'=>$notes,
-
-            "moyenne"=>$moyenne
-        ], 200);
-    }
-
-    /**
+     /**
      * @param Request $request, $id
      * mise à jour des annonces (éditer) 
      */
+
+   
 
     public function editAnnounce(Request $request, $id)
     {
@@ -183,7 +147,100 @@ class AnnouncementController extends Controller
         ], 200);
     }
 
-    
+
+    /**
+     * afficher toutes les annonces
+     */
+    public function getAllAnnounce()
+    {
+        $announcements = Announcement::with('category', 'author', 'pictures')->get();
+
+        $notes = Note::all();
+
+        $moyennes = [];
+
+        foreach ($announcements as $announcement) {
+            $notesByAnnounce = $notes->where('announcement', $announcement->id);
+
+            $moyenne = $notesByAnnounce->avg('note');
+
+            $moyennes[$announcement->id] = $moyenne;
+        }
+
+        return response()->json([
+            'status' => 200,
+            'announcements' => $announcements,
+            'moyennes' => $moyennes,
+        ], 200);
+    }
+
+
+
+    /**
+     * @param $id
+     * afficher une annonce
+     */
+    public function getAnnouncement($id)
+    {
+        $announcement = Announcement::find($id);
+
+        $announcement->load('category', 'author', 'pictures', );
+
+        $notes = Note::where('announcement', $id)->get();
+
+        $moyenne = $notes->avg('note');
+
+        return response()->json([
+
+            'announcement' => $announcement,
+
+            'notes' => $notes,
+
+            "moyenne" => $moyenne
+        ], 200);
+    }
+
+    /**
+ * Afficher les annonces de l'utilisateur connecté
+ */
+/**
+ * Afficher les annonces de l'utilisateur connecté avec les notes et la moyenne
+ */
+public function getMyAnnouncements()
+{
+    $user = Auth::user();
+
+    if (!$user) {
+        return response()->json([
+            'status' => 401,
+            'message' => "Vous devez être authentifié pour effectuer cette action.",
+        ], 401);
+    }
+
+    $userAnnouncements = Announcement::where('author', $user->id)
+        ->with('category', 'pictures')
+        ->get();
+
+    $notes = Note::whereIn('announcement', $userAnnouncements->pluck('id'))->get();
+
+    $moyennes = [];
+
+    foreach ($userAnnouncements as $announcement) {
+        $notesByAnnounce = $notes->where('announcement', $announcement->id);
+        $moyenne = $notesByAnnounce->avg('note');
+        $moyennes[$announcement->id] = $moyenne;
+    }
+
+    return response()->json([
+        'status' => 200,
+        'announcements' => $userAnnouncements,
+        'notes' => $notes,
+        'moyennes' => $moyennes,
+    ], 200);
+}
+
+
+
     /**
      * @param $id
      * suppression des annonces
@@ -198,7 +255,6 @@ class AnnouncementController extends Controller
                 'message' => "Cette annonce n'a pas été trouvée.",
             ], 422);
         }
-        /*   dd($announcement->author()); */
         if ($announcement->author !== Auth::user()->id) {
             return response()->json([
                 'status' => 403,

@@ -28,7 +28,7 @@ class Announcement extends Model
         return $this->hasMany(Picture::class,"announcement","id");
     }
 
-    public function note()
+    public function notes()
     {
         return $this->hasMany(Note::class, "announcement", "id");
     }

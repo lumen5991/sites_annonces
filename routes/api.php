@@ -70,18 +70,30 @@ Route::prefix('category')->group(function () {
 });
 
 // Routes d'annonces
-Route::middleware('auth:sanctum')->prefix('announce')->group(function () {
+Route::prefix('announce')->group(function () {
 
-    Route::post("/add", [AnnouncementController::class, "addAnnounce"]);
+  
+    Route::get("/getAll", [AnnouncementController::class, "getAllAnnounce"]);
 
-    Route::get("/getAll", [AnnouncementController::class,"getAllAnnounce"]);
+    Route::middleware(['auth:sanctum'])->group(function () {
 
-    Route::get("/get/{id}", [AnnouncementController::class,"getAnnouncement"]);
+        Route::post("/add", [AnnouncementController::class, "addAnnounce"]);
 
-    Route::post("/edit/{id}", [AnnouncementController::class, "editAnnounce"]);
+        Route::get("/get/{id}", [AnnouncementController::class,"getAnnouncement"]);
 
-    Route::delete("/delete/{id}", [AnnouncementController::class,"deleteAnnounce"]);
+        Route::post("/edit/{id}", [AnnouncementController::class, "editAnnounce"]);
+    
+        Route::delete("/delete/{id}", [AnnouncementController::class,"deleteAnnounce"]);
 
+        Route::get("/myAnnouncements", [AnnouncementController::class, "getMyAnnouncements"]);
+    
+    });
+
+    
+
+    
+
+   
 });
 
 
