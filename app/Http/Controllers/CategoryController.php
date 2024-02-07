@@ -62,10 +62,12 @@ class CategoryController extends Controller
     public function getAllCategories()
     {
         $categories = Category::all();
+        $announceByCategory = Category::with('announcements')->get();
 
         return response()->json([
             'status' => 200,
             'categories' => $categories,
+            'announceByCategory'=>$announceByCategory
         ], 200);
     }
 
@@ -136,23 +138,22 @@ class CategoryController extends Controller
         ], 200);
     }
 
-    
+
     /**
      * @param $id
      * supprimer une catégorie
      */
     public function deleteCategory($id)
     {
-
-       /** @var User $authUser */
-       $authUser = Auth::user();
-       if (!$authUser->hasRole('admin')) {
-           return response()->json([
-               'status' => 403,
-               'error' => true,
-               'message' => "Vous n'êtes pas autorisé à afficher cette catégorie.",
-           ], 403);
-       }
+        /** @var User $authUser */
+        $authUser = Auth::user();
+        if (!$authUser->hasRole('admin')) {
+            return response()->json([
+                'status' => 403,
+                'error' => true,
+                'message' => "Vous n'êtes pas autorisé à afficher cette catégorie.",
+            ], 403);
+        }
 
         $category = Category::find($id);
 
@@ -163,6 +164,8 @@ class CategoryController extends Controller
             ], 422);
         }
 
+      
+
         $category->delete();
 
         return response()->json([
@@ -170,4 +173,5 @@ class CategoryController extends Controller
             'message' => "La catégorie a été supprimée avec succès.",
         ], 200);
     }
+
 }
