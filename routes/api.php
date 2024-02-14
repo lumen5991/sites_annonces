@@ -72,7 +72,6 @@ Route::prefix('category')->group(function () {
 // Routes d'annonces
 Route::prefix('announce')->group(function () {
 
-  
     Route::get("/getAll", [AnnouncementController::class, "getAllAnnounce"]);
 
     Route::middleware(['auth:sanctum'])->group(function () {

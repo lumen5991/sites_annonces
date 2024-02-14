@@ -153,8 +153,9 @@ class AnnouncementController extends Controller
      */
     public function getAllAnnounce()
     {
-        $announcements = Announcement::with('category', 'author', 'pictures')->get();
+        $announcements = Announcement::with('category', 'author', 'pictures')-> latest()->take(6)->get();
 
+       /*  $posts = Post::latest()->take(10)->get(); */
         $notes = Note::all();
 
         $moyennes = [];

@@ -56,6 +56,22 @@ class AuthController extends Controller
             "password" => Hash::make($data["password"]),
         ]);
 
+
+        if (User::where('email', $data['email'])->exists()) {
+            return response()->json([
+                'status' => 422,
+                'message' => 'Un utilisateur avec cet e-mail existe déjà.',
+            ], 422);
+        }
+
+        if (User::where('username', $data['username'])->exists()) {
+            return response()->json([
+                'status' => 422,
+                'message' => "Un utilisateur avec ce nom d'utilisateur existe déjà.",
+            ], 422);
+        }
+
+
         if (!$user) {
             return response()->json([
                 'status' => 500,
@@ -211,7 +227,7 @@ class AuthController extends Controller
             'roles' => $roles,
         ], 200);
     }
-    
+
 
     /**
      * @param Request $request
@@ -330,6 +346,9 @@ class AuthController extends Controller
                 'message' => "Vous n'êtes pas connecté, veuillez vous connectez avant de supprimer votre compte",
             ], 404);
         }
+
+
+        $user->announcement()->notes()->delete();
 
         $user->announcement()->delete();
 
